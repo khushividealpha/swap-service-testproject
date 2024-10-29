@@ -1,9 +1,9 @@
 ﻿using Newtonsoft.Json;
+using swap_service.Dto;
 using swap_service.Models;
 using SwapAnalyzer.Models;
 using SwapAnalyzer.WPFUtilities.Support;
 using SwapWorkerService;
-using SwapWorkerService.Helpers;
 using SwapWorkerService.Models;
 using System.Globalization;
 using System.Net.Http.Json;
@@ -65,7 +65,7 @@ namespace SwapAnalyzer.Helpers
 
         }
 
-
+      
         public static async Task CalculateSwap()
         {
             try
@@ -73,94 +73,117 @@ namespace SwapAnalyzer.Helpers
                 using (HttpClient client = new HttpClient())
 
                 {   // Fetch swap settings from your API instead of Firebase
-                    var response = await client.GetAsync("https://localhost:7175/api/instrument-swap");
-                    if (!response.IsSuccessStatusCode)
+                    try
                     {
-                        // Handle error (e.g., log it)
-                        AppLogWriter.WriteInLog("Failed to fetch swap settings from the API.");
-                        return;
-                    }
+                        var response = await client.GetStringAsync("http://13.232.66.46/api/instrument-swap");
+                        
+                        Console.WriteLine(response);
+                        //   var snapshot = await response.Content.ReadFromJsonAsync<List<InstrumentSwapModel>>();
+                        // var snapshot = await response.Content.ReadFromJsonAsync<List<InstrumentSwapModel>>();
+                        /*                        var acctualresponse = JsonConvert.DeserializeObject<ResponseModel>(response);
+                        */                        /*                    Dictionary<string, ISwapUserSetting> dicsnapshot = snapshot.ToDictionary(item => item.Symbol);
+                                                */
 
-                    var snapshot = await response.Content.ReadFromJsonAsync<List<InstrumentSwapModel>>();
-/*                    Dictionary<string, ISwapUserSetting> dicsnapshot = snapshot.ToDictionary(item => item.Symbol);
-*/                    Dictionary<string, ISwapUserSetting> lstSettings = new Dictionary<string, ISwapUserSetting>();
+                        /*     if (acctualresponse != null && acctualresponse.data != null)
+                             {
+                                 var ssnapshot = new List<InstrumentSwapModel>(
 
-                    foreach (var documentData in snapshot)
-                    {
-                        // Console.WriteLine(documentData);
-                       // Dictionary<string, object> Data = snapshot
+                                     );*/
 
-                        ISwapUserSetting swapUserSetting = SwapFactory.GetSwapObject(documentData.CalculationMethod ?? "ByPoint");
+                        //     var snapshot = JsonConvert.DeserializeObject<List<InstrumentSwapModel>>(ssnapshot.ToString());
+                        var acctualresponse = JsonConvert.DeserializeObject<ResponseModel>(response);
+                       
+                        var datacontent = acctualresponse.data;
 
+                        
+                        Dictionary<string, InstrumentSwapModel> lstSettings = new Dictionary<string,InstrumentSwapModel>();
+                    
+                            var snapshot = JsonConvert.DeserializeObject<List<InstrumentSwapModel>>(datacontent.ToString());
 
-                        // Now you can work with the data in documentData dictionary
-                      //  string method = documentData.GetFixValue<string>("calculationMethod");
-
-                        // Set the dayMultiplier, defaulting to [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] if not provided
-                        swapUserSetting.dayMultiplier = documentData.DayMultiplier;
-                        swapUserSetting.Symbol = documentData.Symbol;
-                        swapUserSetting.ShortValue = documentData.ShortSwap != default ? documentData.ShortSwap : 5;
-                        swapUserSetting.TickValue = documentData.TickSize != default ? documentData.TickSize : .1M;
-                        swapUserSetting.LongValue = documentData.LongSwap != default ? documentData.LongSwap : -5;
-                        swapUserSetting.MotherCurrency = documentData.MotherCurrency ?? "USD";
-
-                        // Get current date and calculate the selected multiplier
-                        System.DateTime currentDate = AppUtilities.ConvertToDateTime(DBFireBase.FormattedTime, "ddMMyyyy");
-                        int dayIndex = (int)currentDate.DayOfWeek;
-                        swapUserSetting.selectedMultiplier = swapUserSetting.dayMultiplier[dayIndex];
-                     //   swapUserSetting.ClosePrc = SQLDatabase.GetSymbolClose(swapUserSetting.Symbol);
-                        if (swapUserSetting.ClosePrc <= 0)
-                        {
-                            continue;
-                        }
-
-                        lstSettings.Add(swapUserSetting.Symbol, swapUserSetting);
-                    }
-
-
-
-                    // Fetch net positions from your MySQL database
-                    List<NetPositions> lstNetPosition = await MySqlDB.GetAllParam<NetPositions>("CALL GetNetQueryData()");
-                    UserSwap userSwap = null;
-                    Dictionary<string, List<UserSwap>> dctUserSwap = null;
-
-                    if (lstNetPosition != null && lstNetPosition.Count > 0)
-                    {
-                        dctUserSwap = new Dictionary<string, List<UserSwap>>();
-                        foreach (var pos in lstNetPosition) 
-
-                        {
-                            if (lstSettings.ContainsKey(pos.Symbol))
+                        foreach (var documentData in snapshot)
                             {
-                                userSwap = new UserSwap
-                                {
-                                    UserID = pos.UserId,
-                                    setting = lstSettings[pos.Symbol],
-                                    //setting.ContractMultiplier = pos.Multiplier,
-                                    OpenQty = pos.NetQty
-                                };
+                            // Console.WriteLine(documentData);0
+                            // Dictionary<string, object> Data = snapshot
+                            
+                           // InstrumentSwapModel swapUserSetting = SwapFactory.GetSwapObject(documentData.CalculationMethod ?? "ByPoint");
 
-                                if (!dctUserSwap.ContainsKey(pos.UserId))
+                          ISwapUserSetting swapUserSetting = null;
+
+                            /* Now you can work with the data in documentData dictionary
+                            //  string method = documentData.GetFixValue<string>("calculationMethod");
+
+                            // Set the dayMultiplier, defaulting to [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] if not provided
+                                swapUserSetting.dayMultiplier = documentData.DayMultiplier;
+                                swapUserSetting.Symbol = documentData.Symbol;
+                                swapUserSetting.ShortValue = documentData.ShortSwap != default ? documentData.ShortSwap : 5;
+                                swapUserSetting.TickValue = documentData.TickSize != default ? documentData.TickSize : .1M;
+                                swapUserSetting.LongValue = documentData.LongSwap != default ? documentData.LongSwap : -5;
+                                swapUserSetting.MotherCurrency = documentData.MotherCurrency ?? "USD";
+
+                                // Get current date and calculate the selected multiplier
+                                System.DateTime currentDate = AppUtilities.ConvertToDateTime(DBFireBase.FormattedTime, "ddMMyyyy");
+                                int dayIndex = (int)currentDate.DayOfWeek;
+                                swapUserSetting.selectedMultiplier = swapUserSetting.dayMultiplier[dayIndex];
+                                //   swapUserSetting.ClosePrc = SQLDatabase.GetSymbolClose(swapUserSetting.Symbol);
+                                if (swapUserSetting.ClosePrc <= 0)
                                 {
-                                    dctUserSwap.Add(pos.UserId, new List<UserSwap>());
+                                    continue;
                                 }
 
-                                dctUserSwap[pos.UserId].Add(userSwap);
-
-                                // Calculate the SwapRate based on the NetQty
-                                if (pos.NetQty > 0)
-                                {
-                                    userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateLongSwap(pos.NetQty), pos.NetQty);
-                                }
-                                else if (pos.NetQty < 0)
-                                {
-                                    userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateShortSwap(pos.NetQty), pos.NetQty);
-                                }
+                                lstSettings.Add(swapUserSetting.Symbol, swapUserSetting);
                             }
-                        }
 
-                        // Save the user swaps using your API or database method
-                        await SaveUserSwapsToAPI(dctUserSwap);  // Change this to your API call if necessary
+
+
+
+                            // Fetch net positions from your MySQL database
+                            List<NetPositions> lstNetPosition = await MySqlDB.GetAllParam<NetPositions>("CALL GetNetQueryData()");
+                            UserSwap userSwap = null;
+                            Dictionary<string, List<UserSwap>> dctUserSwap = null;
+
+                            if (lstNetPosition != null && lstNetPosition.Count > 0)
+                            {
+                                dctUserSwap = new Dictionary<string, List<UserSwap>>();
+                                foreach (var pos in lstNetPosition)
+
+                                {
+                                    if (lstSettings.ContainsKey(pos.Symbol))
+                                    {
+                                        userSwap = new UserSwap
+                                        {
+                                            UserID = pos.UserId,
+                                            setting = lstSettings[pos.Symbol],
+                                            //setting.ContractMultiplier = pos.Multiplier,
+                                            OpenQty = pos.NetQty
+                                        };
+
+                                        if (!dctUserSwap.ContainsKey(pos.UserId))
+                                        {
+                                            dctUserSwap.Add(pos.UserId, new List<UserSwap>());
+                                        }
+
+                                        dctUserSwap[pos.UserId].Add(userSwap);
+
+                                        // Calculate the SwapRate based on the NetQty
+                                        if (pos.NetQty > 0)
+                                        {
+                                            userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateLongSwap(pos.NetQty), pos.NetQty);
+                                        }
+                                        else if (pos.NetQty < 0)
+                                        {
+                                            userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateShortSwap(pos.NetQty), pos.NetQty);
+                                        }
+                                    }
+                                }
+
+                                // Save the user swaps using your API or database method
+                                await SaveUserSwapsToAPI(dctUserSwap);  // Change this to your API call if necessary
+                            }
+                        
+                    }
+                    catch (Exception ex)
+                    {
+
                     }
                 }
             }
@@ -195,6 +218,23 @@ namespace SwapAnalyzer.Helpers
 
             return positions; 
         }
+
+        public async Task<List<NetPositionDto>> GetNetPositionDtosAsync()
+        {
+            var netPositions = await FetchNetPositionsFromAPI();
+
+            // Mapping NetPositions to NetPositionDto
+            var netPositionDtos = netPositions.Select(position => new NetPositionDto
+            {
+                UserId = position.UserId,
+                Symbol = position.Symbol,
+                CurrentPrice = position.CurrentPrice,
+                // Map other fields as required
+            }).ToList();
+
+            return netPositionDtos;
+        }
+
         public static string GetCurrentUTCTime()
         {
             return System.DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.ffffffZ");

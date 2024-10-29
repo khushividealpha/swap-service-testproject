@@ -26,17 +26,8 @@ namespace SwapWorkerService
             MySqlDB.MyConString = _configuration["MyConfig:MySqlConStr"];
             SQLDatabase.ConString = _configuration["MyConfig:SQLServerConString"];
 
-          //  AppUtilities.SetEnvironmentVar();
-            AppLogWriter.WriteInLog("Service Started");
-            timeFile = Path.Combine(LogWriter.GetAppDataPath(), "Trigger.csv");
-            if (!File.Exists(timeFile))
-            {
-
-                using (StreamWriter sw = new StreamWriter(new FileStream(timeFile, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite)))
-                {
-                    sw.Write("21:00:00");
-                }
-            }
+            //  AppUtilities.SetEnvironmentVar();
+      
 
         }
         static bool isRunToday = false;
@@ -49,25 +40,33 @@ namespace SwapWorkerService
             {
                 AppLogWriter.WriteInLog("Service1 Started");
                 Console.WriteLine(AppUtilities.AppendTime("Exe started "));
-                TriggerTime = AppUtilities.ConvertToDateTime(File.ReadAllText(timeFile), "HH:mm:ss");
+                //TriggerTime = AppUtilities.ConvertToDateTime(File.ReadAllText(timeFile), "HH:mm:ss");
                 isRunToday = true;
                 AppLogWriter.WriteInLog("Swap analyzer exe started");
                 Console.WriteLine(AppUtilities.AppendTime("Swap analyzer exe started"));
-                // await AppUtilities.CalculateSwap();
+               await AppUtilities.CalculateSwap();
                 isRunToday = false;
-
-                while (!stoppingToken.IsCancellationRequested)
+                AppLogWriter.WriteInLog("Service Started");
+                timeFile = Path.Combine(LogWriter.GetAppDataPath(), "Trigger.csv");
+                if (!File.Exists(timeFile))
                 {
-                    if (DateTime.Now >= TriggerTime)
+
+                    using (StreamWriter sw = new StreamWriter(new FileStream(timeFile, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite)))
                     {
+                        sw.Write("21:00:00");
+                    }
+                }
+              
+                    if (DateTime.Now >= TriggerTime)
+                    {   
                         TriggerTime = TriggerTime.AddDays(1);
                         DBFireBase.InitTime();
                         AppLogWriter.WriteInLog("Swap calculation Started");
                         Console.WriteLine(AppUtilities.AppendTime("Swap calculation Started "));
-                        await AppUtilities.CalculateSwap();
+                      // await AppUtilities.CalculateSwap();
                     }
-                    await Task.Delay(1000, stoppingToken);
-                }
+                   // await Task.Delay(1000, stoppingToken);
+                
             }
             catch (Exception ex)
             {

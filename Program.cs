@@ -11,6 +11,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(context.Configuration).CreateLogger();
         services.AddSerilog();
         services.AddHostedService<Worker>();
+
     })
      .ConfigureAppConfiguration((hostingContext, config) =>
      {

@@ -161,3 +161,4 @@ C:\Users\Khushi Gangwar\source\repos\swap-service\swap-service\obj\Debug\net8.0\
 C:\Users\Khushi Gangwar\source\repos\swap-service\swap-service\obj\Debug\net8.0\swap-service.pdb
 C:\Users\Khushi Gangwar\source\repos\swap-service\swap-service\obj\Debug\net8.0\swap-service.genruntimeconfig.cache
 C:\Users\Khushi Gangwar\source\repos\swap-service\swap-service\obj\Debug\net8.0\ref\swap-service.dll
+C:\Users\Khushi Gangwar\source\repos\swap-service\swap-service\obj\Debug\net8.0\swap-service.sourcelink.json
