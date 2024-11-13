@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("swap-service")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fdf0e177d5dede2d01dacf6cc4b59d381fc01292")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e72bceda87761d9ef5b280321cf49a66528e99d1")]
 [assembly: System.Reflection.AssemblyProductAttribute("swap-service")]
 [assembly: System.Reflection.AssemblyTitleAttribute("swap-service")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

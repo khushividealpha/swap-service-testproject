@@ -73,11 +73,13 @@ namespace SwapAnalyzer.Helpers
                 {
                     try
                     {
-                        var response = await client.GetStringAsync("http://13.232.66.46/api/instrument-swap");
+                        HttpResponseMessage response = await DBFireBase.GetSwapSettingSnapshot();
+                        string responseContent = await response.Content.ReadAsStringAsync();
 
-                        Console.WriteLine(response);
 
-                        var acctualresponse = JsonConvert.DeserializeObject<ResponseModel>(response);
+                        Console.WriteLine(responseContent);
+
+                        var acctualresponse = JsonConvert.DeserializeObject<ResponseModel>(responseContent);
 
                         var datacontent = acctualresponse.data;
 
