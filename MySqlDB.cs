@@ -1,13 +1,59 @@
 ﻿using System.Data;
 using System.Reflection;
 using MySqlConnector;
+using SwapAnalyzer.Models;
 using SwapAnalyzer.WPFUtilities.Support;
 
 namespace SwapWorkerService
 {
     internal class MySqlDB
     {
+
+        public static string _connectionString;
+        public MySqlDB(IConfiguration configuration)    
+        {
+            _connectionString = configuration.GetConnectionString("MySqlSecConStr") ?? throw new ArgumentNullException(nameof(configuration)); ;
+        }
         public static string MyConString { get; set; }
+        public static string MySqlSecConStr { get; set; }
+        public static async Task<List<NetPosition>> GetPositionsAsync()
+        {
+            var positions = new List<NetPosition>();
+
+            try
+            {
+                using (var connection = new MySqlConnection(MySqlSecConStr))
+                {
+                    await connection.OpenAsync();
+
+                    string query = "SELECT * FROM positions";
+                    using (var command = new MySqlCommand(query, connection))
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            var position = new NetPosition
+                            {
+                                symbol = reader.GetString("Symbol"),
+                                userId = reader.GetString("UserId"),
+                                Multiplier = reader.GetDecimal("Multiplier"),
+                                NetQty = reader.GetInt32("NetQty")
+                                // Map other fields as needed
+                            };
+                            positions.Add(position);
+                        }
+                    }
+                }
+
+             //   return positions;
+            }
+            catch
+            {
+              
+            }
+            return positions;
+        }
+      
         public static async Task<List<T>> GetAllParam<T>(string query)
         {
             List<T> resultList = new List<T>();
@@ -68,5 +114,6 @@ namespace SwapWorkerService
             }
             return 0; // Default value if query fails or result is null
         }
+
     }
 }

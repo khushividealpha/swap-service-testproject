@@ -3,9 +3,9 @@
     internal class NetPosition
     {
         public string symbol { get; set; }
-        public double NetQty { get; set; }
+        public decimal NetQty { get; set; }
 
-        public double Multiplier { get; set; }
+        public decimal Multiplier { get; set; }
 
         public string userId { get; set; }
 

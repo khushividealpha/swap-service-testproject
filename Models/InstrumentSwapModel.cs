@@ -12,5 +12,5 @@ public class InstrumentSwapModel
     public Decimal ShortSwap { get; set; }
     public Decimal LongSwap { get; set; }
     public Decimal TickSize { get; set; }
-    public string? Symbol { get; set; }
+    public string?  InstrumentName { get; set; }
 }

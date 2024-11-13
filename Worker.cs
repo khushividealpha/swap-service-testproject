@@ -24,6 +24,7 @@ namespace SwapWorkerService
 
             Config.IsLogEnabled = Convert.ToBoolean(_configuration["MyConfig:IsLogEnabled"]);
             MySqlDB.MyConString = _configuration["MyConfig:MySqlConStr"];
+            MySqlDB.MySqlSecConStr = _configuration["MyConfig:MySqlSecConStr"];
             SQLDatabase.ConString = _configuration["MyConfig:SQLServerConString"];
 
             //  AppUtilities.SetEnvironmentVar();
@@ -44,7 +45,7 @@ namespace SwapWorkerService
                 isRunToday = true;
                 AppLogWriter.WriteInLog("Swap analyzer exe started");
                 Console.WriteLine(AppUtilities.AppendTime("Swap analyzer exe started"));
-               await AppUtilities.CalculateSwap();
+                await AppUtilities.CalculateSwap("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOlsicmFkaGFAZ21haWwuY29tIiwicmFkaGFAZ21haWwuY29tIl0sImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWVpZGVudGlmaWVyIjoiNDIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJjbGllbnQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiUmFkaGEiLCJleHAiOjE3MzE0NzY3MzEsImlzcyI6InZpZGVhbHBoYS5jb20iLCJhdWQiOiJ2aWRlYWxwaGEuY29tIn0.iFEZvV9qEleSifHuVcC2DxjPxFwxXYWOOwGEnPdS6_U");
                 isRunToday = false;
                 AppLogWriter.WriteInLog("Service Started");
                 timeFile = Path.Combine(LogWriter.GetAppDataPath(), "Trigger.csv");

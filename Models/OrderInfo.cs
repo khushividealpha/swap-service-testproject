@@ -101,7 +101,7 @@ namespace SwapAnalyzer.Models
        {
                 "brokerageType", brokerageType},
       { "markup", markup},
-                {"orderRecievedOnServerAt",Helpers.AppUtilities.GetCurrentUTCTime() },
+             //   {"orderRecievedOnServerAt",Helpers.AppUtilities.GetCurrentUTCTime() },
 
                 { "adminId",adminId},
                  { "createdByAdmin",adminId},

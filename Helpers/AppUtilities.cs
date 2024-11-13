@@ -1,13 +1,10 @@
-﻿using Newtonsoft.Json;
-using swap_service.Dto;
+﻿using Azure;
+using Newtonsoft.Json;
 using swap_service.Models;
 using SwapAnalyzer.Models;
-using SwapAnalyzer.WPFUtilities.Support;
 using SwapWorkerService;
 using SwapWorkerService.Models;
 using System.Globalization;
-using System.Net.Http.Json;
-using System.Text;
 
 namespace SwapAnalyzer.Helpers
 {
@@ -42,7 +39,7 @@ namespace SwapAnalyzer.Helpers
 
         public static decimal SafeDivide(dynamic num1, dynamic num2)
         {
- 
+
 
             if (num1 == num2)
             {
@@ -65,326 +62,257 @@ namespace SwapAnalyzer.Helpers
 
         }
 
-      
-        public static async Task CalculateSwap()
+
+        public static async Task CalculateSwap(string token)
         {
+            var lstSettings = new Dictionary<string, ISwapUserSetting>();
             try
             {
                 using (HttpClient client = new HttpClient())
 
-                {   // Fetch swap settings from your API instead of Firebase
+                {
                     try
                     {
                         var response = await client.GetStringAsync("http://13.232.66.46/api/instrument-swap");
-                        
+
                         Console.WriteLine(response);
-                        //   var snapshot = await response.Content.ReadFromJsonAsync<List<InstrumentSwapModel>>();
-                        // var snapshot = await response.Content.ReadFromJsonAsync<List<InstrumentSwapModel>>();
-                        /*                        var acctualresponse = JsonConvert.DeserializeObject<ResponseModel>(response);
-                        */                        /*                    Dictionary<string, ISwapUserSetting> dicsnapshot = snapshot.ToDictionary(item => item.Symbol);
-                                                */
 
-                        /*     if (acctualresponse != null && acctualresponse.data != null)
-                             {
-                                 var ssnapshot = new List<InstrumentSwapModel>(
-
-                                     );*/
-
-                        //     var snapshot = JsonConvert.DeserializeObject<List<InstrumentSwapModel>>(ssnapshot.ToString());
                         var acctualresponse = JsonConvert.DeserializeObject<ResponseModel>(response);
-                       
+
                         var datacontent = acctualresponse.data;
 
-                        
-                        Dictionary<string, InstrumentSwapModel> lstSettings = new Dictionary<string,InstrumentSwapModel>();
-                    
-                            var snapshot = JsonConvert.DeserializeObject<List<InstrumentSwapModel>>(datacontent.ToString());
+
+
+
+                        var snapshot = JsonConvert.DeserializeObject<List<InstrumentSwapModel>>(datacontent.ToString());
 
                         foreach (var documentData in snapshot)
-                            {
-                            // Console.WriteLine(documentData);0
-                            // Dictionary<string, object> Data = snapshot
-                            
-                           // InstrumentSwapModel swapUserSetting = SwapFactory.GetSwapObject(documentData.CalculationMethod ?? "ByPoint");
-
-                          ISwapUserSetting swapUserSetting = null;
-
-                            /* Now you can work with the data in documentData dictionary
-                            //  string method = documentData.GetFixValue<string>("calculationMethod");
-
-                            // Set the dayMultiplier, defaulting to [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0] if not provided
-                                swapUserSetting.dayMultiplier = documentData.DayMultiplier;
-                                swapUserSetting.Symbol = documentData.Symbol;
-                                swapUserSetting.ShortValue = documentData.ShortSwap != default ? documentData.ShortSwap : 5;
-                                swapUserSetting.TickValue = documentData.TickSize != default ? documentData.TickSize : .1M;
-                                swapUserSetting.LongValue = documentData.LongSwap != default ? documentData.LongSwap : -5;
-                                swapUserSetting.MotherCurrency = documentData.MotherCurrency ?? "USD";
-
-                                // Get current date and calculate the selected multiplier
-                                System.DateTime currentDate = AppUtilities.ConvertToDateTime(DBFireBase.FormattedTime, "ddMMyyyy");
-                                int dayIndex = (int)currentDate.DayOfWeek;
-                                swapUserSetting.selectedMultiplier = swapUserSetting.dayMultiplier[dayIndex];
-                                //   swapUserSetting.ClosePrc = SQLDatabase.GetSymbolClose(swapUserSetting.Symbol);
-                                if (swapUserSetting.ClosePrc <= 0)
-                                {
-                                    continue;
-                                }
-
-                                lstSettings.Add(swapUserSetting.Symbol, swapUserSetting);
-                            }
-
-
-
-
-                            // Fetch net positions from your MySQL database
-                            List<NetPositions> lstNetPosition = await MySqlDB.GetAllParam<NetPositions>("CALL GetNetQueryData()");
-                            UserSwap userSwap = null;
-                            Dictionary<string, List<UserSwap>> dctUserSwap = null;
-
-                            if (lstNetPosition != null && lstNetPosition.Count > 0)
-                            {
-                                dctUserSwap = new Dictionary<string, List<UserSwap>>();
-                                foreach (var pos in lstNetPosition)
-
-                                {
-                                    if (lstSettings.ContainsKey(pos.Symbol))
-                                    {
-                                        userSwap = new UserSwap
-                                        {
-                                            UserID = pos.UserId,
-                                            setting = lstSettings[pos.Symbol],
-                                            //setting.ContractMultiplier = pos.Multiplier,
-                                            OpenQty = pos.NetQty
-                                        };
-
-                                        if (!dctUserSwap.ContainsKey(pos.UserId))
-                                        {
-                                            dctUserSwap.Add(pos.UserId, new List<UserSwap>());
-                                        }
-
-                                        dctUserSwap[pos.UserId].Add(userSwap);
-
-                                        // Calculate the SwapRate based on the NetQty
-                                        if (pos.NetQty > 0)
-                                        {
-                                            userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateLongSwap(pos.NetQty), pos.NetQty);
-                                        }
-                                        else if (pos.NetQty < 0)
-                                        {
-                                            userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateShortSwap(pos.NetQty), pos.NetQty);
-                                        }
-                                    }
-                                }
-
-                                // Save the user swaps using your API or database method
-                                await SaveUserSwapsToAPI(dctUserSwap);  // Change this to your API call if necessary
-                            }
-                        
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                AppLogWriter.WriteInLog(ex);
-            }
-        }
-        private static async Task SaveUserSwapsToAPI(Dictionary<string, List<UserSwap>> dctUserSwap)
-        {
-            using (HttpClient client = new HttpClient())
-            {
-                var content = new StringContent(JsonConvert.SerializeObject(dctUserSwap), Encoding.UTF8, "application/json");
-                var response = await client.PostAsync("https://localhost:7175/api/save-user-swap", content);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    // Handle error in saving the data
-                    AppLogWriter.WriteInLog("Failed to save user swaps to the API.");
-                }
-                else
-                {
-                    Console.WriteLine("User swaps saved successfully.");
-                }
-            }
-        }
-        public async Task<List<NetPositions>> FetchNetPositionsFromAPI()
-        {
-            using var httpClient = new HttpClient();
-            var response = await httpClient.GetStringAsync("https://exchdata.videalpha.com/pos");
-            var positions = JsonConvert.DeserializeObject<List<NetPositions>>(response);
-
-            return positions; 
-        }
-
-        public async Task<List<NetPositionDto>> GetNetPositionDtosAsync()
-        {
-            var netPositions = await FetchNetPositionsFromAPI();
-
-            // Mapping NetPositions to NetPositionDto
-            var netPositionDtos = netPositions.Select(position => new NetPositionDto
-            {
-                UserId = position.UserId,
-                Symbol = position.Symbol,
-                CurrentPrice = position.CurrentPrice,
-                // Map other fields as required
-            }).ToList();
-
-            return netPositionDtos;
-        }
-
-        public static string GetCurrentUTCTime()
-        {
-            return System.DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.ffffffZ");
-        }
-
-        /*        public static T ConvertNumeric<T>(object val)
-                {
-
-                    T outVal = (T)Convert.ChangeType(0, typeof(T));
-                    //if (val == null)
-                    //    return outVal;
-                    try
-                    {
-                        if (!string.IsNullOrEmpty(val.ToString()))
                         {
-                            return (T)Convert.ChangeType(val, typeof(T));
-                        }
-                        else
-                        {
-                            return outVal;
+
+
+                            ISwapUserSetting swapUserSetting = null;
+                            //  Dictionary<string, object> settings = snapshot.ToDictionary();
+                            string method = documentData.CalculationMethod;
+                            if (method == default(string))
+                            {
+                                method = "ByPoint";
+                            }
+                            swapUserSetting = SwapFactory.GetSwapObject(method);
+                            swapUserSetting.dayMultiplier = documentData.DayMultiplier;
+                            swapUserSetting.Symbol = documentData.InstrumentName;
+                            swapUserSetting.MotherCurrency = documentData.MotherCurrency;
+                            swapUserSetting.TickValue = documentData.TickSize;
+                            swapUserSetting.ShortValue = documentData.ShortSwap;
+                            swapUserSetting.LongValue = documentData.LongSwap;
+                            swapUserSetting.ClosePrc = await GetClosePriceAsync(swapUserSetting.Symbol);
+                            lstSettings.Add(swapUserSetting.Symbol, swapUserSetting);
                         }
                     }
                     catch
                     {
-                        throw;
+
                     }
-                }*/
+                }
+                /////--------------------------------------------------------unauthorize aa rha ky kre----------------------------------------------------
+                /*  using (HttpClient client = new HttpClient())
+                  {
+                      client.BaseAddress = new Uri("http://13.232.66.46/");
+                      client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        /*        public static string EncryptStringToBytes(string plainText, byte[] key, byte[] iv)
+                      HttpResponseMessage responsePosition = await client.GetAsync("api/net-position");
+                      var positionContent = await responsePosition.Content.ReadAsStringAsync();
+                      var netPositionResponse = JsonConvert.DeserializeObject<ResponseModel>(positionContent);
+                      var lstNetPosition = JsonConvert.DeserializeObject<List<NetPosition>>(netPositionResponse.data.ToString());
+                      UserSwap userSwap = null;
+                      Dictionary<string, List<UserSwap>> dctUserSwap = null;
+                      if (lstNetPosition == null || lstNetPosition.Count == 0)
+                      {
+                          Console.WriteLine("No net positions found.");
+                          return;
+                      }
+                      if (lstNetPosition != null && lstNetPosition.Count > 0)
+                      {
+                          foreach (var pos in lstNetPosition)
+                          {
+                              if (lstSettings.ContainsKey(pos.symbol))
+                              {
+                                  ISwapUserSetting setting = lstSettings[pos.symbol];
+                                  userSwap = new UserSwap();
+                                  userSwap.UserID = pos.userId;
+                                  if (!dctUserSwap.ContainsKey(pos.userId))
+                                  {
+                                      dctUserSwap.Add(pos.userId, new List<UserSwap>());
+                                  }
+
+                                  dctUserSwap[pos.userId].Add(userSwap);
+
+                                  userSwap.setting = lstSettings[pos.symbol];
+                                  userSwap.setting.ContractMultiplier = pos.Multiplier;
+                                  userSwap.OpenQty = pos.NetQty;
+
+                                  Console.WriteLine($"Processing swap for symbol: {pos.symbol}");
+                                  if (pos.NetQty > 0)
+                                  {
+                                      userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateLongSwap(pos.NetQty), pos.NetQty);
+                                  }
+                                  else if (pos.NetQty < 0)
+                                  {
+                                      userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateShortSwap(pos.NetQty), pos.NetQty);
+                                  }
+                              }
+
+                          }
+                          //integrate post api of user swap
+                          // Serialize dctUserSwap to JSON and send as a POST request
+                          var jsonContent = JsonConvert.SerializeObject(dctUserSwap);
+                          var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+                          using (HttpClient clientPost = new HttpClient())
+                          {
+                              clientPost.BaseAddress = new Uri("http://13.232.66.46/");
+
+                              HttpResponseMessage postResponse = await clientPost.PostAsync("api/user-swap", content);
+
+                              if (postResponse.IsSuccessStatusCode)
+                              {
+                                  Console.WriteLine("User swaps saved successfully.");
+                              }
+                              else
+                              {
+                                  Console.WriteLine($"Failed to save user swaps. Status: {postResponse.StatusCode}");
+                              }
+                          }
+                      }
+                  }
+
+  */
+              // Fetch data directly from the positions table
+        List<NetPosition> lstNetPosition = await MySqlDB.GetPositionsAsync();
+                UserSwap userSwap = null;
+                Dictionary<string, List<UserSwap>> dctUserSwap = null;
+                if (lstNetPosition != null && lstNetPosition.Count > 0)
                 {
-                    byte[] encrypted;
-
-                    using (Aes aesAlg = Aes.Create())
+                    dctUserSwap = new Dictionary<string, List<UserSwap>>();
+                    foreach (var pos in lstNetPosition)
                     {
-                        aesAlg.Key = key;
-                        aesAlg.IV = iv;
-
-                        ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-
-                        using (MemoryStream msEncrypt = new MemoryStream())
+                        if (lstSettings.ContainsKey(pos.symbol))
                         {
-                            using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                            userSwap = new UserSwap();
+                            userSwap.UserID = pos.userId;
+                            if (!dctUserSwap.ContainsKey(pos.userId))
                             {
-                                using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
-                                {
-                                    swEncrypt.Write(plainText);
-                                }
-                                encrypted = msEncrypt.ToArray();
+                                dctUserSwap.Add(pos.userId, new List<UserSwap>());
                             }
+
+                            dctUserSwap[pos.userId].Add(userSwap);
+
+                            userSwap.setting = lstSettings[pos.symbol];
+                            userSwap.setting.ContractMultiplier = pos.Multiplier;
+                            userSwap.OpenQty = pos.NetQty;
+
+                            // Get the day of the week as an index (0 for Sunday, 1 for Monday, etc.)
+
+                            // if open qty is in buy i.e buytotal > selltotal , use long swap value for calculations
+                            //else if total sell qty > total buy qty, use short swap value for calculaion
+
+                            if (pos.NetQty > 0)
+                            {
+                                userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateLongSwap(pos.NetQty), pos.NetQty);
+                            }
+                            else if (pos.NetQty < 0)
+                            {
+                                userSwap.setting.SwapRate = SafeDivide(userSwap.setting.CalculateShortSwap(pos.NetQty), pos.NetQty);
+                            }
+
                         }
                     }
-                    return Convert.ToBase64String(encrypted);
-                }*/
-        /*        public static string DecryptString(string key, string cipherText)
-                {
-                    byte[] iv = new byte[16];
-                    byte[] buffer = Convert.FromBase64String(cipherText);
 
-                    using (Aes aes = Aes.Create())
-                    {
-                        aes.Key = Encoding.UTF8.GetBytes(key);
-                        aes.IV = iv;
-                        aes.Mode = CipherMode.CBC;
-                        aes.Padding = PaddingMode.PKCS7;
-                        ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-
-                        using (MemoryStream memoryStream = new MemoryStream(buffer))
-                        {
-                            using (CryptoStream cryptoStream = new CryptoStream((Stream)memoryStream, decryptor, CryptoStreamMode.Read))
-                            {
-                                using (StreamReader streamReader = new StreamReader((Stream)cryptoStream))
-                                {
-                                    return streamReader.ReadToEnd();
-                                }
-                            }
-                        }
-                    }
-                }*/
-
-        /*     public static async Task<string> GetUserName(string userID)
-             {
-                 try
-                 {
-                     var firestore = DBFireBase.Instance;
-
-                     FirebaseAuth firebaseAuth = FireSingle.Instance;
-
-                     Query appRegQuery = firestore.Collection("appRegistrations");
-                     QuerySnapshot allCitiesQuerySnapshot = await appRegQuery.GetSnapshotAsync();
-
-
-                     UserRecord userRecord = await FirebaseAuth.DefaultInstance.GetUserAsync(userID);
-
-                     return userRecord.DisplayName;
-                 }
-                 catch (Exception ex)
-                 {
-                     WPFUtilities.Support.AppLogWriter.WriteInLog(ex, MethodBase.GetCurrentMethod());
-                 }
-                 return string.Empty;
-
-             }*/
-
-        /*        public static string GetConString()
-                {
+                    //integrate post api of user swap
+                    // Serialize dctUserSwap to JSON and send as a POST request
                     try
                     {
-                        return $"Data Source={Path.Combine(AppLogWriter.GetAppDataPath(), "PrimeXMDB.db")}";
+                        var responseModel = new ResponseModel
+                        {
+                            data = dctUserSwap.Values,  // Set data to dctUserSwap values
+                            status = 200,  // Assuming success status; adjust as needed
+                            message = "User swap data submission"  // Custom message
+                        };
+                        var jsonContent = JsonConvert.SerializeObject(responseModel);
+                        Console.WriteLine(jsonContent);
+                        var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+                        string url = "http://13.232.66.46/api/user-swap";
+                        using (HttpClient clientPost = new HttpClient())
+                        {
+                           // clientPost.BaseAddress = new Uri("http://13.232.66.46/");
+
+                            HttpResponseMessage postResponse = await clientPost.PostAsync(url, content);
+                            postResponse.EnsureSuccessStatusCode();
+                            if (postResponse.IsSuccessStatusCode)
+                            { 
+
+                                Console.WriteLine("User swaps saved successfully.");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Failed to save user swaps. Status: {postResponse.StatusCode}");
+                            }
+                        }
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        WPFUtilities.Support.AppLogWriter.WriteInLog(ex, MethodBase.GetCurrentMethod());
+
                     }
-                    return null;
+                    
                 }
+            }
+            catch
+            {
 
-               
-        */
-        /*        public static void SetEnvironmentVar()
+            }
+        }
+        public static async Task<decimal> GetClosePriceAsync(string? symbol)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                // Set up the URL for the POST request
+                string url = "https://historicaldata.videalpha.com/SymbolClose";
+
+                // Create the content for the POST request
+                var requestData = new { Symbol = symbol };
+                var jsonContent = new StringContent(
+                    System.Text.Json.JsonSerializer.Serialize(requestData),
+                    System.Text.Encoding.UTF8,
+                    "application/json"
+                );
+
+                try
                 {
+                    // Send the POST request
+                    HttpResponseMessage response = await httpClient.PostAsync(url, jsonContent);
+                    response.EnsureSuccessStatusCode();
 
-                    string envPath = Path.Combine(Config.BaseFilePath, "firebaseadminsdk.json");
-                    AppLogWriter.WriteInLog($"ENV PATH {envPath}");
-                    if (System.Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS") != null && string.Compare(System.Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS"), envPath) != 0)
-                    {
-                        System.Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", envPath);
-                    }
-                    if (System.Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS") == null)
-                    {
-                        System.Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", envPath);
-                    }
+                    // Assuming the response content is a decimal value for the close price
+                    string responseContent = await response.Content.ReadAsStringAsync();
 
-                }*/
-        /*
-                public static string GetCurrentDirectory(string fileName)
+                    // Convert the response to a decimal
+                    if (decimal.TryParse(responseContent, out decimal closePrice))
+                    {
+                        return closePrice;
+                    }
+                    else
+                    {
+                        throw new Exception("Failed to parse the close price from API response.");
+                    }
+                }
+                catch (Exception ex)
                 {
-                    // Get the path of the executable file
-                    string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-
-                    // Resolve the directory
-                    string directory = Path.GetDirectoryName(exePath);
-
-                    // Construct the full file path relative to the directory
-                    string relativeFilePath = Path.Combine(directory, fileName);
-                    AppLogWriter.WriteInLog($"Path {relativeFilePath}");
-                    return relativeFilePath;
-                }*/
-       
-
-
+                    Console.WriteLine($"Error fetching close price: {ex.Message}");
+                    throw;
+                }
+            }
+        }
     }
 
-}
+}            
+

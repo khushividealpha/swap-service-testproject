@@ -157,7 +157,7 @@ namespace swap_service.Models
             }
         }
 
-        public double Multiplier { get; set; }
+        public decimal Multiplier { get; set; }
 
         public double OpenAvg
         {

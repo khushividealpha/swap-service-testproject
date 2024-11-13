@@ -10,29 +10,12 @@ namespace SwapAnalyzer.Helpers
 {
     public sealed class DBFireBase
     {
-        /* private static FirestoreDb db = null;
-         private static readonly object padlock = new object();
 
-
-         public static FirestoreDb Instance
-         {
-             get
-             {
-                 lock (padlock)
-                 {
-                     if (db == null)
-                     {
-                         db = FirestoreDb.Create(Config.ProjID);
-
-                     }
-                     return db;
-                 }
-             }
-         }*/
         public static string FormattedTime { get; set; }
         public static async void InitTime()
         {
-            FormattedTime = await API.GetNTPTime();
+            FormattedTime = await API.GetNTPTime 
+                ();
         }
         public static async Task<HttpResponseMessage> GetSwapSettingSnapshot()
         {

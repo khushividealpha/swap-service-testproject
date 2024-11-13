@@ -30,7 +30,7 @@
                 }
                 return default(T);
             }
-            catch (Exception ex)
+            catch(Exception)
             {
 
                 int test = 100;
